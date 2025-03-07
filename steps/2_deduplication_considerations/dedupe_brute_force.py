@@ -5,7 +5,7 @@ customers this might take significant processing time. Specifically, this takes 
 of grouping by the TAX/SSN ID column, the phone number column, and the email column to find
 any matching values (more unique and id like columns). For any matches, it compares each pair of matching rows within those groupings by considering every column for the strength of the relationship. These figures are output to a csv with the potential matches.
 
-The results can then be considered according to their connection strength (some number between )"""
+The results can then be considered according to their connection strength (some number between 16 and 164)"""
 import re
 from typing import Dict, List, Any
 
@@ -39,7 +39,6 @@ def get_cluster_exact_match_elements(df: pd.core.frame.DataFrame, column_name: s
     grouping = grouping.reset_index()
     return grouping.loc[grouping["# Rows Grouped"]>1].iloc[:,0].to_list()
 
-
 #*#*#*#*#*#*#*#*#
 # Similarity Functions
 #*#*#*#*#*#*#*#*#
@@ -57,7 +56,7 @@ def test_name_similarity(current_name:str, other_name:str, temp_memory = {}) -> 
     3 = it's reasonable
     0 = not a close match"""
     # current_name, other_name = row[column_name],compared_row[column_name]
-    if current_name == other_name:
+    if current_name.lower().strip() == other_name.lower().strip():
         return 4
     elif quick_typo_check(current_name,other_name):
         query_embedding = model.encode(current_name)
@@ -88,14 +87,14 @@ def test_id_similarity(current_id:Any, other_id:Any) -> int:
 
 def test_one_column_of_row_similarity(row: pd.Series, df: pd.core.frame.DataFrame, column_name: str, function_to_apply: callable) -> None:
     """This exists because of a weird unexplained error. It came from the df[column_name].apply(lambda x: test_name_similarity(x,row[column_name])) part, but inexplicably seemed the same as other columns. City was the only one affected...it seemed"""
+    similarity_column = column_name.replace(" ","_") + "_Similarity"
     try:
-        df.loc[df.index == df.index,column_name.replace(" ","_") + "_Similarity"] = df[column_name].apply(lambda x: function_to_apply(x,row[column_name]))
+        df.loc[df.index == df.index,similarity_column] = df[column_name].apply(lambda x: function_to_apply(x,row[column_name]))
     except:
-        df.loc[:,column_name.replace(" ","_") + "_Similarity"] = None
+        df.loc[df.index == df.index,similarity_column] = None
         for _, compared_row in df.iterrows():
             score = function_to_apply(row[column_name],compared_row[column_name])
             df.loc[df.index == compared_row.name,column_name.replace(" ","_") + "_Similarity"] = score
-        
 
 def test_similarity_to_row(row: pd.Series, df: pd.core.frame.DataFrame) -> pd.core.frame.DataFrame:
     test_one_column_of_row_similarity(row,df,"Name",test_name_similarity)
@@ -127,12 +126,12 @@ def brute_force_dedupe(deduplication_file_csv_location: str):
                     # The multiplication is dependent on column ordering
                     similarity_score = sum(similarity_scores)
                     with open(r"steps/2_deduplication_considerations/data_brute/" + f"brute_similarity_scores_v{version_number}.txt","a+") as f:
-                        _ = f.write(f"{current_row_to_consider_for_duplicate.name}\t{row.name}\t{"\t".join([str(x) for x in similarity_scores])}\t{similarity_score}\n")
-                
+                        tab = "\t"
+                        _ = f.write(f"{current_row_to_consider_for_duplicate.name}{tab}{row.name}{tab}{tab.join([str(x) for x in similarity_scores])}{tab}{similarity_score}\n")
                 current_row_to_consider_for_duplicate = remaining_elements.iloc[0]
                 remaining_elements = remaining_elements.iloc[1:]
 
 if __name__ == "__main__":
-    deduplication_file_csv_location = r'C:\Users\austin.tracy\Documents\Deduplication\steps\1_fake_data\data\fake_deduplication_data_v6_small.csv'
+    deduplication_file_csv_location = r'C:\Users\austin.tracy\Documents\Deduplication\steps\1_fake_data\data\fake_deduplication_data_v1_small.csv'
     brute_force_dedupe(deduplication_file_csv_location)
     

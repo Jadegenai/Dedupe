@@ -10,6 +10,49 @@ fake = Faker()
 #*#*#*#*#*#*#*#*#
 # Fake Data
 #*#*#*#*#*#*#*#*#
+def generate_name_related_or_random_email(names: List[str]):
+    work_related = None
+    random_float = random.random()
+    if random_float < .1:
+        first_part_of_email = names[0].lower() + "." + names[1].lower() + (str(random.randint(1,999)) if random_float < .05 else "")
+    elif random_float < .2:
+        first_part_of_email = names[0].lower() + names[1].lower() + (str(random.randint(1,999)) if random_float < .15 else "")
+    elif random_float < .4:
+        first_part_of_email = names[0].lower() + names[1].lower()[0]  + (str(random.randint(1,999)) if random_float < .65 else "")
+    elif random_float < .75:
+        first_part_of_email = names[0].lower()[0] + names[1].lower()[0] + (str(random.randint(1,999)) if random_float < .7499 else "")     
+    else:
+        work_related = False
+        first_part_of_email = fake.word() + (str(random.randint(1,999)) if random_float < .95 else "")
+    
+    random_float = random.random()
+    if work_related == False:
+        while random_float >= .85:
+            random_float = random.random()
+    if random_float < .4:
+        new_email = first_part_of_email + "@gmail.com"
+    elif random_float < .5:
+        new_email = first_part_of_email + "@outlook.com"
+    elif random_float < .6:
+        new_email = first_part_of_email + "@yahoo.com" 
+    elif random_float < .65:
+        new_email = first_part_of_email + "@icloud.com"
+    elif random_float < .7:
+        new_email = first_part_of_email + "@aol.com"
+    elif random_float < .72:
+        new_email = first_part_of_email + "@ProtonMail.com"
+    elif random_float < .74:
+        new_email = first_part_of_email + "@Zoho.com"
+    elif random_float < .76:
+        new_email = first_part_of_email + "@GMX.com"
+    elif random_float < .78:
+        new_email = first_part_of_email + "@mail.com"
+    elif random_float < .85:
+        new_email = first_part_of_email + "@mymail.com"
+    else:
+        new_email = first_part_of_email + f"@{fake.company().replace(' ','').lower()}.com"    
+    return new_email
+
 def generate_fake_data(num_entries=10):
     data = []    
     for _ in range(num_entries):
@@ -21,7 +64,7 @@ def generate_fake_data(num_entries=10):
         zip_code = fake.zipcode()
         phone_number = fake.phone_number()
         tax_id = fake.ssn()  if random.random() < 0.7 else generate_fake_tax_id()# Use `ssn()` for generating a Tax ID or SSN
-        email = fake.email()
+        email = generate_name_related_or_random_email(name.split(" "))
         dob = fake.date_of_birth(minimum_age=18, maximum_age=80).strftime("%Y-%m-%d")  # Date of Birth        
         data.append({
             'Name': name,
@@ -123,19 +166,19 @@ def generate_duplicates(df, num_rows=5):
             column = "Email"
         if column == "Email":
             random_float = random.random()
-            if random_float < .85:
-                name_information = new_row["Name"].to_list()[0].split(" ")
-                if random_float < .1:
-                    first_part_of_email = name_information[0].lower() + "." + name_information[1].lower() + str(random.randint(1,999)) if random_float < .05 else ""
-                elif random_float < .2:
-                    first_part_of_email = name_information[0].lower() + name_information[1].lower() + str(random.randint(1,999)) if random_float < .15 else ""
-                elif random_float < .4:
-                    first_part_of_email = name_information[0].lower() + name_information[1].lower()[0]  + str(random.randint(1,999)) if random_float < .05 else ""
-                else:
-                    first_part_of_email = name_information[0].lower()[0] + name_information[1].lower()[0]     
+            name_information = new_row["Name"].to_list()[0].split(" ")
+            if random_float < .1:
+                first_part_of_email = name_information[0].lower() + "." + name_information[1].lower() + (str(random.randint(1,999)) if random_float < .05 else "")
+            elif random_float < .2:
+                first_part_of_email = name_information[0].lower() + name_information[1].lower() + (str(random.randint(1,999)) if random_float < .15 else "")
+            elif random_float < .4:
+                first_part_of_email = name_information[0].lower() + name_information[1].lower()[0]  + (str(random.randint(1,999)) if random_float < .65 else "")
+            elif random_float < .75:
+                first_part_of_email = name_information[0].lower()[0] + name_information[1].lower()[0]     
             else:
-                first_part_of_email = fake.english_word() + str(random.randint(1,999)) if random_float < .05 else ""
+                first_part_of_email = fake.word() + (str(random.randint(1,999)) if random_float < .95 else "")
 
+            
             random_float = random.random()
             if random_float < .4:
                 new_email = first_part_of_email + "@gmail.com"
@@ -170,18 +213,17 @@ def generate_duplicates(df, num_rows=5):
 
 def generate_fake_tax_id():
     # 9 digits starting with a 9
-    return ''.join(["9" + str(random.randint(0, 9)) for _ in range(8)])
-
+    return "9" + ''.join([str(random.randint(0, 9)) for _ in range(8)])
+generate_fake_tax_id()
 
 # Create Some Base Fake Data
 # fake_data = generate_fake_data(100000)
 # df = pd.DataFrame(fake_data)
+# df.to_csv(r"steps\1_fake_data\data\fake_deduplication_data_base.csv",index=False)
 
 # Read From Existing Fake Base Deduplication Data
 df = pd.read_csv(r"steps\1_fake_data\data\fake_deduplication_data_base.csv")[:1000]
-df = df[['Name', 'Street Address', 'City', 'State', 'Zip',
-       'Phone Number', 'Tax ID/SSN', 'Email', 'Date Of Birth']]
 
 # Create additional fake data with some potential for overlap (but not a guarantee)
 df = pd.concat([df,generate_duplicates(df,1000)],ignore_index=True)
-df.to_csv("fake_deduplication_data_v8_small.csv",index=False)
+df.to_csv("fake_deduplication_data_v1_small.csv",index=False)

@@ -132,6 +132,6 @@ def brute_force_dedupe(deduplication_file_csv_location: str):
                 remaining_elements = remaining_elements.iloc[1:]
 
 if __name__ == "__main__":
-    deduplication_file_csv_location = r'C:\Users\austin.tracy\Documents\Deduplication\steps\1_fake_data\data\fake_deduplication_data_v1_small.csv'
+    deduplication_file_csv_location = r'steps\1_fake_data\data\fake_deduplication_data_v2_small.csv'
     brute_force_dedupe(deduplication_file_csv_location)
     

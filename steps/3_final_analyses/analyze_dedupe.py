@@ -3,7 +3,7 @@ import pyautogui
 
 from data_cleaning import *
 
-og_df = pd.read_csv(r"steps\1_fake_data\data\fake_deduplication_data_v1_small.csv")
+og_df = pd.read_csv(r"steps\1_generate_data\data\fake_deduplication_data_v1_small.csv")
 clean_phone_numbers(og_df,"Phone Number")
 regularize_us_phone_numbers(og_df,"Phone Number","State")
 

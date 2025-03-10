@@ -23,3 +23,6 @@ for _, pattern in list(match_patterns.iterrows())[4:]:
     pyautogui.alert("Another Pattern Has Been Printed...")
     print("\n\n\n\n\n\n\n\n\n\n\n\n\n")
 
+
+    
+

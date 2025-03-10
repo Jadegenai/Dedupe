@@ -53,22 +53,36 @@ def get_encoding(text: str, temp_memory: Dict[str,List[float]]) -> List[float]:
 
 def test_name_similarity(current_name:str, other_name:str, temp_memory = {}) -> int:
     """4 = a true match
-    3 = it's reasonable
+    3-1 = it's reasonable
     0 = not a close match"""
     # current_name, other_name = row[column_name],compared_row[column_name]
-    if current_name.lower().strip() == other_name.lower().strip():
+    current_name = current_name.lower().strip()
+    other_name = other_name.lower().strip()
+    if current_name == other_name:
         return 4
-    elif quick_typo_check(current_name,other_name):
-        query_embedding = model.encode(current_name)
-        if np.linalg.norm(query_embedding - get_encoding(other_name,temp_memory)) < 1:
-            return 3
-        else:
-            return 0
+    query_embedding = model.encode(current_name)
+    if np.linalg.norm(query_embedding - get_encoding(other_name,temp_memory)) < 1:
+        return 3
+    
+    # Considerations about misentering
+    typo_measurement = either_way_typo_measurement(current_name,other_name)
+    # assess hearing as a different factor if typos are more than just 1
+    # hearing should be more intensive of a consideration, so it is held off
+    if typo_measurement > 1:
+        typo_measurement = min(typo_measurement,either_way_mishearing_measurement(current_name,other_name))
+    if typo_measurement < 4:
+        return 4 - typo_measurement
     else:
         return 0
 
 def test_id_similarity(current_id:Any, other_id:Any) -> int:
-    """4 = a true match
+    """This function unlike the name function expects an exact match or it to be
+    something different (that is whereas a name can have parts omitted and still be
+    the same name [just presented in part] an email is technically completely different
+    if not presented in full...) There may be some similarity between email addresses that can be
+    missed in treating it in this manner, but an email is not the same email as another if its
+    any different...
+    4 = a true match
     3-1 = it's close
     0 = not a close match"""
     current_id = str(current_id)
@@ -76,9 +90,12 @@ def test_id_similarity(current_id:Any, other_id:Any) -> int:
     if current_id == other_id or current_id is None or other_id is None:
         return 4
     if quick_typo_check(current_id,other_id):
-        query_embedding = model.encode(current_id)
         typo_measurement = either_way_typo_measurement(current_id,other_id)
-        if either_way_typo_measurement(current_id,other_id) < 4:
+        # assess hearing as a different factor if typos are more than just 1
+        # hearing should be more intensive of a consideration, so it is held off
+        if typo_measurement > 1:
+            typo_measurement = min(typo_measurement,either_way_mishearing_measurement(current_id,other_id))
+        if typo_measurement < 4:
             return 4 - typo_measurement
         else:
             return 0
@@ -132,6 +149,6 @@ def brute_force_dedupe(deduplication_file_csv_location: str):
                 remaining_elements = remaining_elements.iloc[1:]
 
 if __name__ == "__main__":
-    deduplication_file_csv_location = r'steps\1_fake_data\data\fake_deduplication_data_v2_small.csv'
+    deduplication_file_csv_location = r'steps\1_generate_data\data\fake_deduplication_data_v2_small.csv'
     brute_force_dedupe(deduplication_file_csv_location)
     
